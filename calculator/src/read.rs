@@ -77,11 +77,12 @@ where
                 year = format!("20{}", date_vec[2]).parse::<i32>().unwrap();
             }
 
-            Ok(NaiveDate::from_ymd(
+            Ok(NaiveDate::from_ymd_opt(
                 year,
                 date_vec[0].parse::<u32>().unwrap(),
                 date_vec[1].parse::<u32>().unwrap(),
-            ))
+            )
+            .unwrap())
         }
     }
 
