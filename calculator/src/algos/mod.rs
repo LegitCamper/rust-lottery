@@ -8,8 +8,6 @@ use std::{
 };
 use tokio::task::spawn;
 
-type Tickets = Vec<Vec<i8>>;
-
 pub async fn optimize(
     numbers: Arc<LotteryNumbers>,
     ticket_size: i32,
@@ -17,7 +15,7 @@ pub async fn optimize(
 ) -> Vec<i8> {
     let results: Arc<Mutex<HashMap<i32, i32>>> = Arc::new(Mutex::new(HashMap::new()));
     // let mut task_handles: Vec<JoinHandle<()>> = Vec::new();
-    for w in 1..1000 {
+    for w in 1..numbers.len() - 2 {
         let numbers = numbers.clone();
         let results = results.clone();
         spawn(async move {
@@ -38,7 +36,7 @@ pub async fn optimize(
             results
                 .lock()
                 .unwrap()
-                .insert(w.try_into().unwrap(), matching_numbers.try_into().unwrap());
+                .insert(w as i32, matching_numbers.try_into().unwrap());
         });
     }
 
@@ -52,11 +50,4 @@ pub async fn optimize(
     // runs with now optimized window size
     let window = numbers.windows(most_numbers.0.try_into().unwrap());
     algo(window, ticket_size)
-}
-
-pub fn get_tickets(ticket_numbers: Vec<i8>, ticket_size: usize) -> Tickets {
-    ticket_numbers
-        .into_iter()
-        .combinations(ticket_size)
-        .collect::<Tickets>() // next real ticket numbers
 }
