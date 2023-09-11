@@ -10,17 +10,17 @@ pub struct LotteryTicket {
     pub date: NaiveDate,
     #[serde(rename = "Winning Numbers")]
     #[serde(deserialize_with = "deserialize_numbers_string")]
-    pub numbers: Vec<i8>,
+    pub numbers: Vec<u8>,
 }
 
-fn deserialize_numbers_string<'de, D>(deserializer: D) -> Result<Vec<i8>, D::Error>
+fn deserialize_numbers_string<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
 where
     D: de::Deserializer<'de>,
 {
     struct StringVisitor;
 
     impl<'de> de::Visitor<'de> for StringVisitor {
-        type Value = Vec<i8>;
+        type Value = Vec<u8>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a string containing number data")
@@ -34,7 +34,7 @@ where
             let iter = v.split(" - ");
             let iter_len = iter.clone().collect::<Vec<&str>>().len();
             for item in iter {
-                out.push(item.parse::<i8>().unwrap())
+                out.push(item.parse::<u8>().unwrap())
             }
             if !out.is_empty() {
                 return Ok(out);
