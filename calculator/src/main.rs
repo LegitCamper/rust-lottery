@@ -4,19 +4,22 @@ use crate::{
 };
 use chrono::naive::{Days, NaiveDate};
 use itertools::Itertools;
-use tokio;
 mod algos;
 mod read;
+mod tests;
 use std::sync::Arc;
 
-type LotteryNumbers = Vec<LotteryTicket>;
+type LotteryNumbers = Arc<[LotteryTicket]>;
 type Tickets = Vec<Vec<u8>>;
+
+const MAX_DEPTH: usize = 1000;
 
 #[tokio::main]
 async fn main() {
-    let mut numbers = Arc::new(data_keymap().unwrap());
-    // only keeps latest 1000 for speed sake
-    numbers = numbers[numbers.len() - 1000..numbers.len()].to_vec().into();
+    let numbers = data_keymap().expect("Failed to find/read data.xlsx");
+    let numbers: Arc<[LotteryTicket]> = numbers[numbers.len() - MAX_DEPTH..numbers.len()]
+        .to_vec()
+        .into();
 
     let ticket_length = numbers[0].numbers.len() as u8;
     let draw_date = numbers[numbers.len() - 1]
@@ -25,7 +28,9 @@ async fn main() {
         .unwrap();
 
     let mut ticket_numbers: Vec<u8> = Vec::new();
-    // ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, friends).await);
+
+    // Algos
+    ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, friends).await);
     ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, quiet).await);
 
     print_as_tickets(ticket_numbers, ticket_length, draw_date);

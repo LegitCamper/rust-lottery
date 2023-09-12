@@ -37,11 +37,11 @@ where
                 out.push(item.parse::<u8>().unwrap())
             }
             if !out.is_empty() {
-                return Ok(out);
+                Ok(out)
             } else if iter_len != out.len() {
-                return Err(de::Error::custom("Fuck"));
+                Err(de::Error::custom("Fuck"))
             } else {
-                return Err(de::Error::custom("Fuck"));
+                Err(de::Error::custom("Fuck1"))
             }
         }
     }
@@ -66,7 +66,7 @@ where
             E: de::Error,
         {
             let iter = v.split(", ");
-            let date_vec = iter.last().unwrap().split("/").collect::<Vec<&str>>();
+            let date_vec = iter.last().unwrap().split('/').collect::<Vec<&str>>();
 
             // YIKES
             #[allow(unused_assignments)]
@@ -105,10 +105,8 @@ pub fn data_keymap() -> Option<Vec<LotteryTicket>> {
 
     let mut output = Vec::new();
 
-    for line in iter {
-        if let Ok(line) = line {
-            output.push(line);
-        }
+    for line in iter.flatten() {
+        output.push(line);
     }
 
     if !output.is_empty() {

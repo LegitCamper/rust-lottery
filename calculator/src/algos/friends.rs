@@ -1,7 +1,7 @@
 use crate::LotteryTicket;
 use std::collections::HashMap;
 
-pub fn friends<'a>(window: &[LotteryTicket], length: u8) -> Vec<u8> {
+pub fn friends(window: &[LotteryTicket], length: u8) -> Vec<u8> {
     let mut friend_counter: HashMap<Vec<u8>, u32> = HashMap::new();
 
     for ticket in window {
@@ -22,20 +22,16 @@ pub fn friends<'a>(window: &[LotteryTicket], length: u8) -> Vec<u8> {
     }
     sort_vec.sort_by(|a, b| b.1.cmp(&a.1));
 
-    let mut used_vecs: Vec<[u8; 2]> = Vec::new();
     for (num, _) in &sort_vec {
         if num[0] != num[1] {
-            if output_vec.len() >= length as usize + 1 {
+            if output_vec.len() > length as usize {
                 output_vec.truncate(length as usize + 1);
                 break;
-            } else {
-                if num[0] != num[1] {
-                    if !output_vec.contains(&num[0]) {
-                        output_vec.push(num[0]);
-                    }
-                    if !output_vec.contains(&num[1]) {
-                        output_vec.push(num[1]);
-                    }
+            } else if num[0] != num[1] {
+                if !output_vec.contains(&num[0]) {
+                    output_vec.push(num[0]);
+                } else if !output_vec.contains(&num[1]) {
+                    output_vec.push(num[1]);
                 }
             }
         }

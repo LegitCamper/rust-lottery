@@ -1,15 +1,12 @@
 use crate::{LotteryNumbers, LotteryTicket};
-use std::{
-    sync::Mutex,
-    {collections::HashMap, sync::Arc},
-};
+use std::collections::HashMap;
 use tokio::task::spawn;
 
 pub mod friends;
 pub mod quiet;
 
 pub async fn optimize(
-    numbers: Arc<LotteryNumbers>,
+    numbers: LotteryNumbers,
     ticket_size: u8,
     algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
 ) -> Vec<u8> {
@@ -26,7 +23,7 @@ pub async fn optimize(
 
             let mut matching_numbers = 0;
             for window in windows {
-                let predicted_numbers = algo(window, ticket_size.into());
+                let predicted_numbers = algo(window, ticket_size);
 
                 let mut found_next_ticket = false;
                 let mut next_ticket: &LotteryTicket = &LotteryTicket {
@@ -67,5 +64,5 @@ pub async fn optimize(
 
     // makes prediction based on optimizations
     let mut window = numbers.windows(most_numbers.0.try_into().unwrap());
-    algo(window.next_back().unwrap(), ticket_size.into())
+    algo(window.next_back().unwrap(), ticket_size)
 }
