@@ -22,14 +22,20 @@ pub fn friends(window: &[LotteryTicket], length: u8) -> Vec<u8> {
         .map(|(friends, count)| (friends, count))
         .collect::<Vec<([u8; 2], u32)>>();
     output.sort_by(|a, b| b.1.cmp(&a.1));
-    output
-        .into_iter()
-        .filter(|(num, _)| num[0] != num[1])
-        .map(|(num, _)| {
-            output_vec.push(num[0]);
-            output_vec.push(num[1]);
-        });
 
-    output_vec.truncate(length as usize + 1);
-    output_vec //.unique().sort()
+    for (nums, _) in output {
+        if nums[0] != nums[1] {
+            if output_vec.len() > length as usize {
+                output_vec.truncate(length as usize + 1);
+                break;
+            } else if nums[0] != nums[1] {
+                if !output_vec.contains(&nums[0]) {
+                    output_vec.push(nums[0]);
+                } else if !output_vec.contains(&nums[1]) {
+                    output_vec.push(nums[1]);
+                }
+            }
+        }
+    }
+    output_vec
 }
