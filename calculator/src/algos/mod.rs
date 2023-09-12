@@ -14,11 +14,11 @@ pub async fn optimize(
     let mut results: HashMap<u32, usize> = HashMap::new();
     let mut tasks = Vec::new();
 
+    // finds the best window size that gives the best results
     for w in 1..numbers.len() - 2 {
         let numbers = numbers.clone();
 
         tasks.push(spawn(async move {
-            // finds the best window size that gives the best results
             let windows = numbers.windows(w);
 
             let mut matching_numbers = 0;
@@ -40,8 +40,8 @@ pub async fn optimize(
                     }
                 }
 
-                for num in next_ticket.numbers.clone().into_iter() {
-                    if predicted_numbers.contains(&num) {
+                for num in next_ticket.numbers.iter() {
+                    if predicted_numbers.contains(num) {
                         matching_numbers += num_balls; // dont think this is right
                     }
                 }

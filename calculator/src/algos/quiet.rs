@@ -21,13 +21,10 @@ pub fn quiet(window: &[LotteryTicket], _length: u8) -> Vec<u8> {
         }
 
         // increment missed balls by 1
-        let quiet_stats_keys = quiet_stats.clone();
-        for num in quiet_stats_keys.keys() {
+        for (num, stats) in quiet_stats.iter_mut() {
             if !ticket.numbers.contains(num) {
-                quiet_stats
-                    .entry(*num)
-                    .and_modify(|count| count.miss_count += 1)
-                    .and_modify(|count| count.quiet_counter += 1);
+                stats.miss_count += 1;
+                stats.quiet_counter += 1;
             }
         }
     }

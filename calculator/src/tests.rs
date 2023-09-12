@@ -21,9 +21,9 @@ mod algo_speed_test {
         optimize(numbers.clone(), ticket_length, friends).await;
     }
 
-    // #[tokio::test]
-    // async fn test_quiet() {
-    // let (numbers, ticket_length) = init();
-    // optimize(numbers.clone(), ticket_length, quiet).await;
-    // }
+    #[tokio::test]
+    async fn test_quiet() {
+        let (numbers, ticket_length) = init();
+        optimize(numbers.clone(), ticket_length, quiet).await;
+    }
 }
