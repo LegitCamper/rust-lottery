@@ -14,13 +14,13 @@ pub async fn optimize(
     algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
 ) -> Vec<u8> {
     let num_balls = numbers[0].numbers.len();
-    let results: Arc<Mutex<HashMap<u32, usize>>> = Arc::new(Mutex::new(HashMap::new()));
+    let mut results: HashMap<u32, usize> = HashMap::new();
+    let mut tasks = Vec::new();
 
     for w in 1..numbers.len() - 2 {
-        let results = results.clone();
         let numbers = numbers.clone();
 
-        let _ = spawn(async move {
+        tasks.push(spawn(async move {
             // finds the best window size that gives the best results
             let windows = numbers.windows(w);
 
@@ -49,12 +49,17 @@ pub async fn optimize(
                     }
                 }
             }
-            results.lock().unwrap().insert(w as u32, matching_numbers);
-        });
+            (w as u32, matching_numbers)
+        }));
+    }
+
+    for task in tasks {
+        let (ws, mn) = task.await.unwrap();
+        results.insert(ws, mn);
     }
 
     let mut most_numbers = (1, 0);
-    for item in results.lock().unwrap().iter() {
+    for item in results.iter() {
         if item.1 > &most_numbers.1 {
             most_numbers = (*item.0, *item.1)
         }
