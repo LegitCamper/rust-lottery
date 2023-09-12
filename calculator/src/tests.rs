@@ -15,13 +15,13 @@ mod algo_speed_test {
         (numbers, ticket_length)
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_friends() {
         let (numbers, ticket_length) = init();
         optimize(numbers.clone(), ticket_length, friends).await;
     }
 
-    #[tokio::test]
+    #[tokio::test(flavor = "multi_thread")]
     async fn test_quiet() {
         let (numbers, ticket_length) = init();
         optimize(numbers.clone(), ticket_length, quiet).await;
