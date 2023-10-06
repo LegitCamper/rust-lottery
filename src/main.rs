@@ -1,5 +1,5 @@
 use crate::{
-    algos::{friends::friends, optimize, quiet::quiet},
+    algos::{friends::friends, multiply::multiply, optimize, quiet::quiet},
     read::{data_keymap, LotteryTicket},
 };
 use chrono::naive::{Days, NaiveDate};
@@ -30,8 +30,9 @@ async fn main() {
     let mut ticket_numbers: Vec<u8> = Vec::new();
 
     // Algos
-    ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, friends).await);
-    ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, quiet).await);
+    // ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, friends).await);
+    // ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, quiet).await);
+    ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, multiply).await);
 
     print_as_tickets(ticket_numbers, ticket_length, draw_date);
 }

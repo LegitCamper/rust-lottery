@@ -1,5 +1,4 @@
 use crate::LotteryTicket;
-// use itertools::Itertools;
 use std::collections::HashMap;
 
 pub fn friends(window: &[LotteryTicket], length: u8) -> Vec<u8> {

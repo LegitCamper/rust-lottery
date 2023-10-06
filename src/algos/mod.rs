@@ -1,8 +1,10 @@
 use crate::{LotteryNumbers, LotteryTicket};
+use rayon::prelude::*;
 use std::collections::HashMap;
 use tokio::task::spawn;
 
 pub mod friends;
+pub mod multiply;
 pub mod quiet;
 
 pub async fn optimize(
@@ -19,7 +21,7 @@ pub async fn optimize(
         let numbers = numbers.clone();
 
         tasks.push(spawn(async move {
-            let windows = numbers.windows(w);
+            let windows: std::slice::Windows<LotteryTicket> = numbers.windows(w);
 
             let mut matching_numbers = 0;
             for window in windows {
