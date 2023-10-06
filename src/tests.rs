@@ -1,6 +1,8 @@
 #[cfg(test)]
 mod algo_speed_test {
-    use crate::{friends, optimize, quiet, read::data_keymap, LotteryTickets};
+    use crate::{
+        friends as friends_algo, optimize, quiet as quiet_algo, read::data_keymap, LotteryTickets,
+    };
     use std::boxed::Box;
 
     fn init() -> (LotteryTickets, u8) {
@@ -11,14 +13,14 @@ mod algo_speed_test {
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_friends() {
+    async fn friends() {
         let (lottery_tickets, ticket_len) = init();
-        optimize(lottery_tickets.clone(), ticket_len, friends).await;
+        optimize(lottery_tickets.clone(), ticket_len, friends_algo).await;
     }
 
     #[tokio::test(flavor = "multi_thread")]
-    async fn test_quiet() {
+    async fn quiet() {
         let (lottery_tickets, ticket_len) = init();
-        optimize(lottery_tickets.clone(), ticket_len, quiet).await;
+        optimize(lottery_tickets.clone(), ticket_len, quiet_algo).await;
     }
 }
