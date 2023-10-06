@@ -1,5 +1,6 @@
+#[allow(unused)]
 use crate::{
-    algos::{friends::friends, multiply::multiply, optimize, quiet::quiet},
+    algos::{friends, multiply, optimize, quiet},
     read::{data_keymap, LotteryTicket},
 };
 use chrono::naive::{Days, NaiveDate};
@@ -7,45 +8,43 @@ use itertools::Itertools;
 mod algos;
 mod read;
 mod tests;
-use std::sync::Arc;
+use std::boxed::Box;
 
-type LotteryNumbers = Arc<[LotteryTicket]>;
+type LotteryTickets = &'static [LotteryTicket];
 type Tickets = Vec<Vec<u8>>;
-
-const MAX_DEPTH: usize = 1000;
 
 #[tokio::main]
 async fn main() {
-    let numbers = data_keymap().expect("Failed to find/read data.xlsx");
-    let numbers: Arc<[LotteryTicket]> = numbers[numbers.len() - MAX_DEPTH..numbers.len()]
-        .to_vec()
-        .into();
+    let lottery_tickets: LotteryTickets = Box::leak(Box::new(data_keymap().unwrap()));
 
-    let ticket_length = numbers[0].numbers.len() as u8;
-    let draw_date = numbers[numbers.len() - 1]
+    let ticket_len = lottery_tickets[0].numbers.len() as u8;
+    let draw_date = lottery_tickets[lottery_tickets.len() - 1]
         .date
         .checked_add_days(Days::new(1))
         .unwrap();
 
-    let mut ticket_numbers: Vec<u8> = Vec::new();
+    let mut algo_guesses: Vec<u8> = Vec::new();
 
     // Algos
-    // ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, friends).await);
-    // ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, quiet).await);
-    ticket_numbers.append(&mut optimize(numbers.clone(), ticket_length, multiply).await);
+    algo_guesses.append(&mut optimize(lottery_tickets, ticket_len, friends).await);
+    // algo_guesses.append(&mut optimize(lottery_tickets, ticket_len, quiet).await);
+    // algo_guesses.append(&mut optimize(lottery_tickets, ticket_len, multiply).await);
 
-    print_as_tickets(ticket_numbers, ticket_length, draw_date);
+    print_as_tickets(algo_guesses, ticket_len, draw_date);
 }
 
-fn print_as_tickets(ticket_numbers: Vec<u8>, ticket_length: u8, draw_date: NaiveDate) {
-    let tickets = ticket_numbers
+fn print_as_tickets(algo_guesses: Vec<u8>, ticket_len: u8, draw_date: NaiveDate) {
+    let tickets = algo_guesses
         .into_iter()
         .unique()
-        .combinations(ticket_length as usize)
+        .combinations(ticket_len as usize)
         .sorted()
         .collect::<Tickets>(); // next real ticket numbers
 
-    println!("For Draw On: {draw_date:?} \nPredicted Ticket(s):");
+    println!(
+        "For Draw On: {} \nPredicted Ticket(s):",
+        draw_date.format("%m-%d-%Y").to_string(),
+    );
 
     for ticket in tickets {
         let ticket = ticket.iter().sorted().collect::<Vec<&u8>>();

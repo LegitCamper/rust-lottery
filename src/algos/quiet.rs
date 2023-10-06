@@ -2,6 +2,7 @@ use crate::LotteryTicket;
 use indexmap::map::IndexMap;
 use std::collections::HashMap;
 
+#[allow(unused)]
 pub fn quiet(window: &[LotteryTicket], _length: u8) -> Vec<u8> {
     let mut quiet_stats: IndexMap<u8, QuietStats> = IndexMap::new();
 
@@ -42,6 +43,7 @@ pub fn quiet(window: &[LotteryTicket], _length: u8) -> Vec<u8> {
     Vec::new() // remove this
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 struct QuietStats {
     resets: u32,
@@ -50,6 +52,7 @@ struct QuietStats {
     quiet_counter: u32,
     miss_count: u32,
 }
+#[allow(unused)]
 impl QuietStats {
     fn new() -> Self {
         QuietStats {

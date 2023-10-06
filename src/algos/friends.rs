@@ -1,6 +1,7 @@
 use crate::LotteryTicket;
 use std::collections::HashMap;
 
+#[allow(unused)]
 pub fn friends(window: &[LotteryTicket], length: u8) -> Vec<u8> {
     let mut friend_counter: HashMap<[u8; 2], u32> = HashMap::new();
 

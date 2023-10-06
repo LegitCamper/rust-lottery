@@ -2,6 +2,7 @@ use crate::LotteryTicket;
 // use indexmap::map::IndexMap;
 // use std::collections::HashMap;
 
+#[allow(unused)]
 pub fn multiply(window: &[LotteryTicket], _length: u8) -> Vec<u8> {
     // let mut quiet_stats: HashMap<u8, u8> = HashMap::new();
 

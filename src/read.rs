@@ -39,9 +39,9 @@ where
             if !out.is_empty() {
                 Ok(out)
             } else if iter_len != out.len() {
-                Err(de::Error::custom("Fuck"))
+                Err(de::Error::custom("Empty"))
             } else {
-                Err(de::Error::custom("Fuck1"))
+                Err(de::Error::custom("Empty2"))
             }
         }
     }
@@ -98,7 +98,6 @@ pub fn data_keymap() -> Option<Vec<LotteryTicket>> {
         .ok()?
         .ok()?;
 
-    // let mut iter = RangeDeserializerBuilder::new().from_range(&range).ok()?;
     let iter = RangeDeserializerBuilder::new()
         .from_range::<_, LotteryTicket>(&range)
         .ok()?;

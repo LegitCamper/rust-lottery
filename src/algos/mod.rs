@@ -1,27 +1,36 @@
-use crate::{LotteryNumbers, LotteryTicket};
-use rayon::prelude::*;
+use crate::{LotteryTicket, LotteryTickets};
+// use rayon::prelude::*;
 use std::collections::HashMap;
 use tokio::task::spawn;
 
-pub mod friends;
-pub mod multiply;
-pub mod quiet;
+mod friends;
+pub use friends::friends;
+mod multiply;
+pub use multiply::multiply;
+mod quiet;
+pub use quiet::quiet;
+
+const MAX_DEPTH: usize = 1000;
 
 pub async fn optimize(
-    numbers: LotteryNumbers,
+    lottery_tickets: LotteryTickets,
     ticket_size: u8,
     algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
 ) -> Vec<u8> {
-    let num_balls = numbers[0].numbers.len();
+    let num_balls = lottery_tickets[0].numbers.len();
     let mut results: HashMap<u32, usize> = HashMap::new();
     let mut tasks = Vec::new();
 
+    let max_depth: usize;
+    if lottery_tickets.len() - 2 < 100 {
+        max_depth = lottery_tickets.len() - 2
+    } else {
+        max_depth = MAX_DEPTH
+    }
     // finds the best window size that gives the best results
-    for w in 1..numbers.len() - 2 {
-        let numbers = numbers.clone();
-
+    for w in 1..max_depth {
         tasks.push(spawn(async move {
-            let windows: std::slice::Windows<LotteryTicket> = numbers.windows(w);
+            let windows: std::slice::Windows<LotteryTicket> = lottery_tickets.windows(w);
 
             let mut matching_numbers = 0;
             for window in windows {
@@ -32,7 +41,7 @@ pub async fn optimize(
                     date: chrono::NaiveDate::MIN,
                     numbers: Vec::new(),
                 };
-                for ticket in numbers.iter() {
+                for ticket in lottery_tickets.iter() {
                     if ticket.date == window[w - 1].date {
                         found_next_ticket = true;
                         continue;
@@ -65,6 +74,6 @@ pub async fn optimize(
     }
 
     // makes prediction based on optimizations
-    let mut window = numbers.windows(most_numbers.0.try_into().unwrap());
+    let mut window = lottery_tickets.windows(most_numbers.0.try_into().unwrap());
     algo(window.next_back().unwrap(), ticket_size)
 }
