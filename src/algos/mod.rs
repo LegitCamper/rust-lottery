@@ -15,18 +15,19 @@ mod multiply;
 pub use multiply::multiply;
 mod quiet;
 pub use quiet::quiet;
+mod spine_sort;
+pub use spine_sort::spine_sort;
 
 const MAX_DEPTH: usize = 1000;
 
 pub async fn optimize(
     lottery_tickets: LotteryTickets,
+    last_ticket: &mut LotteryTicket,
     ticket_size: u8,
     algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
-) -> Vec<u8> {
-    let num_balls = lottery_tickets[0].numbers.len();
-
-    // let tasks =
+) -> u32 {
     let results: Arc<Mutex<HashMap<u32, usize>>> = Arc::new(Mutex::new(HashMap::new()));
+    let last_ticket = Arc::new(last_ticket);
     let num_done = &AtomicUsize::new(0);
 
     let most_wins = rayon::scope(|s| {
@@ -38,6 +39,7 @@ pub async fn optimize(
         }
         for w in 1..max_depth {
             let results = results.clone();
+            let last_ticket = last_ticket.clone();
             s.spawn(move |_| {
                 let windows: std::slice::Windows<LotteryTicket> = lottery_tickets.windows(w);
 
@@ -45,25 +47,12 @@ pub async fn optimize(
                 for window in windows {
                     let predicted_numbers = algo(window, ticket_size);
 
-                    let mut found_next_ticket = false;
-                    let mut next_ticket: &LotteryTicket = &LotteryTicket {
-                        date: chrono::NaiveDate::MIN,
-                        numbers: Vec::new(),
-                    };
-                    for ticket in lottery_tickets.iter() {
-                        if ticket.date == window[w - 1].date {
-                            found_next_ticket = true;
-                            continue;
-                        }
-                        if found_next_ticket {
-                            next_ticket = ticket;
-                        }
-                    }
-
-                    for num in next_ticket.numbers.iter() {
-                        if predicted_numbers.contains(num) {
-                            matching_numbers += num_balls; // dont think this is right
-                        }
+                    for num in predicted_numbers.iter() {
+                        matching_numbers += last_ticket
+                            .numbers
+                            .iter()
+                            .filter(|&n| *n as u8 == *num)
+                            .count();
                     }
                 }
                 num_done.fetch_add(1, Relaxed);
@@ -80,18 +69,14 @@ pub async fn optimize(
             thread::sleep(StdDuration::from_secs(1));
         }
 
-        let mut most_numbers = (1, 0);
+        let mut most_wins = (1, 0);
         for (key, item) in results.lock().unwrap().iter() {
-            if item > &most_numbers.1 {
-                most_numbers = (*key, *item)
+            if item > &most_wins.1 {
+                most_wins = (*key, *item)
             }
         }
-        most_numbers
+        most_wins
     });
 
-    println!("Optimized History is {}", most_wins.0);
-
-    // makes prediction based on optimizations
-    let mut window = lottery_tickets.windows(most_wins.0.try_into().unwrap());
-    algo(window.next_back().unwrap(), ticket_size)
+    most_wins.0
 }
