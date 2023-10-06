@@ -1,5 +1,4 @@
 use crate::{LotteryTicket, LotteryTickets};
-// use rayon::prelude::*;
 use std::{
     collections::HashMap,
     sync::{
@@ -32,7 +31,7 @@ pub async fn optimize(
 
     let most_wins = rayon::scope(|s| {
         let max_depth: usize;
-        if lottery_tickets.len() - 2 < 100 {
+        if lottery_tickets.len() - 2 < MAX_DEPTH {
             max_depth = lottery_tickets.len() - 2
         } else {
             max_depth = MAX_DEPTH
