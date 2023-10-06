@@ -1,6 +1,14 @@
 use crate::{LotteryTicket, LotteryTickets};
 // use rayon::prelude::*;
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{
+        atomic::{AtomicUsize, Ordering::Relaxed},
+        Arc,
+    },
+    thread,
+    time::Duration as StdDuration,
+};
 use tokio::task::spawn;
 
 mod friends;
@@ -17,6 +25,7 @@ pub async fn optimize(
     ticket_size: u8,
     algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
 ) -> Vec<u8> {
+    let num_done = Arc::new(AtomicUsize::new(0));
     let num_balls = lottery_tickets[0].numbers.len();
     let mut results: HashMap<u32, usize> = HashMap::new();
     let mut tasks = Vec::new();
@@ -29,6 +38,7 @@ pub async fn optimize(
     }
     // finds the best window size that gives the best results
     for w in 1..max_depth {
+        let num_done = num_done.clone();
         tasks.push(spawn(async move {
             let windows: std::slice::Windows<LotteryTicket> = lottery_tickets.windows(w);
 
@@ -57,8 +67,19 @@ pub async fn optimize(
                     }
                 }
             }
+            num_done.fetch_add(1, Relaxed);
             (w as u32, matching_numbers)
         }));
+    }
+
+    // report progress
+    loop {
+        let n = num_done.load(Relaxed);
+        if n == max_depth - 1 {
+            break;
+        }
+        println!("Working.. {n}/{max_depth}");
+        thread::sleep(StdDuration::from_secs(1));
     }
 
     for task in tasks {
@@ -72,6 +93,8 @@ pub async fn optimize(
             most_numbers = (*item.0, *item.1)
         }
     }
+
+    println!("Optimized History is {}", most_numbers.0);
 
     // makes prediction based on optimizations
     let mut window = lottery_tickets.windows(most_numbers.0.try_into().unwrap());
