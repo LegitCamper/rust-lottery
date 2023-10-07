@@ -15,7 +15,7 @@ const WINDOW_SIZE: usize = 150;
 pub async fn optimize(
     lottery_tickets: LotteryTickets,
     ticket_size: u8,
-    algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
+    algo: fn(&[LotteryTicket], u8) -> Vec<Vec<u8>>,
 ) -> u32 {
     let mut tasks = Vec::new();
 
@@ -32,7 +32,7 @@ pub async fn optimize(
             let windows: std::slice::Windows<LotteryTicket> =
                 lottery_tickets[..lottery_tickets.len() - 1].windows(w);
 
-            for window in windows {
+            for (window_index, window) in windows.clone().enumerate() {
                 let predicted_numbers = algo(window, ticket_size);
 
                 // finds next ticket to compare for accuracy
@@ -51,16 +51,14 @@ pub async fn optimize(
                 }
 
                 // tally matching numbers and multiply weight - weight of recentness and weight of balls
-                let numbers_hit = 0;
-                let window_index = windows.position(|win| win == window).unwrap() as f64;
-                let window_weight = 1.0 / window_index;
+                let window_weight = 1.0 / window_index as f64;
                 println!("window_index: {window_index}"); // TODO: remvove once accuracy ensured
 
                 for ticket in predicted_numbers.iter() {
                     for num in ticket.iter() {
-                        let ball_weight = num.pow(2);
+                        let ball_weight = num.pow(2) as f64;
                         if next_ticket.numbers.contains(num) {
-                            numbers_hit += ball_weight * window_weight;
+                            weighted_matches += ball_weight * window_weight;
                         }
                     }
                 }
@@ -73,7 +71,7 @@ pub async fn optimize(
         }));
     }
 
-    let best_depth = (0, 0.0);
+    let mut best_depth = (0, 0.0);
     for task in tasks {
         let (window_size, weighted_matches) = task.await.unwrap();
         if weighted_matches > best_depth.1 {
