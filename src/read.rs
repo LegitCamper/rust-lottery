@@ -3,7 +3,7 @@ use chrono::NaiveDate;
 use serde::{self, de, Deserialize};
 use std::fmt;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct LotteryTicket {
     #[serde(rename = "Draw date")]
     #[serde(deserialize_with = "deserialize_date_string")]
