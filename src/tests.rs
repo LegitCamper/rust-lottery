@@ -16,8 +16,7 @@ mod algo_speed_test {
         let ticket_len = lottery_tickets[0].numbers.len() as u8;
 
         let optimal_history = optimize(lottery_tickets, ticket_len, algo).await;
-
-        panic!("The optimal history of days is {optimal_history}")
+        println!("The optimal history of days is {optimal_history}")
     }
 
     #[tokio::test(flavor = "multi_thread")]
