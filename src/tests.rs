@@ -7,9 +7,12 @@ mod algo_speed_test {
     };
     use std::boxed::Box;
 
+    const MAX_HISTORY: usize = 1000;
+
     async fn test(algo: fn(&[LotteryTicket], u8) -> Vec<u8>) {
-        let mut tickets = data_keymap().unwrap();
-        let lottery_tickets: LotteryTickets = Box::leak(Box::new(tickets));
+        let tickets = data_keymap().unwrap();
+        let tickets_trimmed = tickets[tickets.len() - MAX_HISTORY..].to_vec();
+        let lottery_tickets: LotteryTickets = Box::leak(Box::new(tickets_trimmed));
         let ticket_len = lottery_tickets[0].numbers.len() as u8;
 
         let optimal_history = optimize(lottery_tickets, ticket_len, algo).await;

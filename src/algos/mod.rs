@@ -18,7 +18,7 @@ pub use quiet::quiet;
 mod spine_sort;
 pub use spine_sort::spine_sort;
 
-const MAX_DEPTH: usize = 1000;
+const MAX_DEPTH: usize = 150;
 
 pub async fn optimize(
     lottery_tickets: LotteryTickets,
