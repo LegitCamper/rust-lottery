@@ -9,11 +9,10 @@ mod algo_speed_test {
 
     async fn test(algo: fn(&[LotteryTicket], u8) -> Vec<u8>) {
         let mut tickets = data_keymap().unwrap();
-        let last_ticket = Box::leak(Box::new(tickets.drain(tickets.len() - 1..).last().unwrap()));
         let lottery_tickets: LotteryTickets = Box::leak(Box::new(tickets));
         let ticket_len = lottery_tickets[0].numbers.len() as u8;
 
-        let optimal_history = optimize(lottery_tickets, last_ticket, ticket_len, algo).await;
+        let optimal_history = optimize(lottery_tickets, ticket_len, algo).await;
 
         panic!("The optimal history of days is {optimal_history}")
     }
