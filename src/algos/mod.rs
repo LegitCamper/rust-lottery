@@ -1,4 +1,6 @@
 use crate::{LotteryTicket, LotteryTickets};
+
+use combinations::Combinations;
 use tokio::task;
 
 mod friends;
@@ -15,7 +17,7 @@ const WINDOW_SIZE: usize = 150;
 pub async fn optimize(
     lottery_tickets: LotteryTickets,
     ticket_size: u8,
-    algo: fn(&[LotteryTicket], u8) -> Vec<Vec<u8>>,
+    algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
 ) -> u32 {
     let mut tasks = Vec::new();
 
@@ -34,6 +36,8 @@ pub async fn optimize(
 
             for (window_index, window) in windows.clone().enumerate() {
                 let predicted_numbers = algo(window, ticket_size);
+                let predicted_tickets: Vec<Vec<u8>> =
+                    Combinations::new(predicted_numbers, ticket_size.into()).collect();
 
                 // finds next ticket to compare for accuracy
                 #[allow(unused)]
@@ -54,7 +58,7 @@ pub async fn optimize(
                 let window_weight = 1.0 / window_index as f64;
                 println!("window_index: {window_index}"); // TODO: remvove once accuracy ensured
 
-                for ticket in predicted_numbers.iter() {
+                for ticket in predicted_tickets.iter() {
                     for num in ticket.iter() {
                         let ball_weight = num.pow(2) as f64;
                         if next_ticket.numbers.contains(num) {

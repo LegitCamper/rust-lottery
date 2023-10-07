@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 calamine = "0.22.0"
 chrono = { version = "0.4.29", features = ["serde"] }
+combinations = "0.1.0"
 indexmap = "2.0.0"
 itertools = "0.11.0"
 rayon = "1.7.0"
