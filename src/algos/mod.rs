@@ -39,6 +39,10 @@ pub async fn optimize(
 
             for (window_index, window) in windows.clone().enumerate() {
                 let predicted_numbers = algo(window, ticket_size);
+                if predicted_numbers.len() < ticket_size.into() {
+                    continue;
+                }
+                print!("{:?}", predicted_numbers.len());
                 let predicted_tickets: Vec<Vec<u8>> =
                     Combinations::new(predicted_numbers, ticket_size.into()).collect();
 
