@@ -42,9 +42,13 @@ pub async fn optimize(
                 if predicted_numbers.len() < ticket_size.into() {
                     continue;
                 }
-                print!("{:?}", predicted_numbers.len());
+
                 let predicted_tickets: Vec<Vec<u8>> =
-                    Combinations::new(predicted_numbers, ticket_size.into()).collect();
+                    if usize::from(ticket_size) == predicted_numbers.len() {
+                        vec![predicted_numbers]
+                    } else {
+                        Combinations::new(predicted_numbers, (ticket_size - 1).into()).collect()
+                    };
 
                 let next_ticket_index =
                     find_tommorows_ticket(window.last().unwrap().date, &lottery_tickets[..])
