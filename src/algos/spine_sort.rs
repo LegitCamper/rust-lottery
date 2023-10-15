@@ -44,7 +44,6 @@ pub fn spine_sort(window: &[LotteryTicket], length: u8) -> Vec<u8> {
         .map(|ball_count| ball_count.ball)
         .collect();
 
-    println!("{predicted_nums:?}");
     predicted_nums.truncate(8);
     predicted_nums
 }

@@ -2,6 +2,7 @@ use crate::{LotteryTicket, LotteryTickets};
 
 use chrono::NaiveDate;
 use combinations::Combinations;
+use f128::f128;
 use std::cmp::Ordering;
 use tokio::task;
 
@@ -32,7 +33,7 @@ pub async fn optimize(
     }
     for window_size in 1..max_depth {
         tasks.push(task::spawn(async move {
-            let mut weighted_matches: f64 = 0.0;
+            let mut weighted_matches: f128 = f128::ZERO;
 
             let windows: std::slice::Windows<LotteryTicket> =
                 lottery_tickets[..lottery_tickets.len() - 1].windows(window_size);
@@ -55,29 +56,29 @@ pub async fn optimize(
                         .unwrap();
 
                 // tally matching numbers and multiply weight - weight of recentness and weight of balls
-                let window_weight = 1.0 / window_index as f64;
+                let window_weight: f128 = f128::ONE / f128::from(window_index);
 
                 for ticket in predicted_tickets.iter() {
                     for num in ticket.iter() {
-                        let ball_weight = num.pow(2) as f64;
+                        let ball_weight: f128 = f128::from(f64::from(*num as u32).powf(2.0));
                         if lottery_tickets[next_ticket_index].numbers.contains(num) {
-                            weighted_matches += ball_weight * window_weight;
+                            weighted_matches += f128::from(ball_weight) * window_weight;
                         }
                     }
                 }
             }
 
             // divide ball total by number of windows for fair eval later
-            weighted_matches = weighted_matches / windows.len() as f64;
+            weighted_matches = weighted_matches / f128::from(windows.len());
 
             (window_size as u32, weighted_matches)
         }));
     }
 
-    let mut best_depth = (0, 0.0);
+    let mut best_depth = (0, f128::ZERO);
     for task in tasks {
         let (window_size, weighted_matches) = task.await.unwrap();
-        if weighted_matches > best_depth.1 {
+        if weighted_matches > f128::from(best_depth.1) {
             best_depth = (window_size, weighted_matches)
         }
     }

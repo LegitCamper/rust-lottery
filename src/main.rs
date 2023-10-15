@@ -47,10 +47,10 @@ async fn main() {
 
         let mut algo_guesses: Vec<u8> = Vec::new();
         // ensure you set the current most optimal number of days correctly
-        algo_guesses.append(&mut friends(&tickets[num_tickets - 13..], ticket_len));
-        // algo_guesses.append(&mut quiet(&lotter_tickets[num_tickets - 13..], ticket_len));
-        // algo_guesses.append(&mut multiply(&lotter_tickets[num_tickets - 13..], ticket_len));
-        // algo_guesses.append(&mut spine_sort(&lotter_tickets[num_tickets - 13..], ticket_len));
+        // algo_guesses.append(&mut friends(&tickets[num_tickets - 13..], ticket_len));
+        // algo_guesses.append(&mut quiet(&tickets[num_tickets - 13..], ticket_len));
+        // algo_guesses.append(&mut multiply(&tickets[num_tickets - 13..], ticket_len));
+        algo_guesses.append(&mut spine_sort(&tickets[num_tickets - 13..], ticket_len));
 
         print_as_tickets(algo_guesses, ticket_len, draw_date);
     }
