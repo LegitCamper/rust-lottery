@@ -48,7 +48,7 @@ pub async fn optimize(
                     if usize::from(ticket_size) == predicted_numbers.len() {
                         vec![predicted_numbers]
                     } else {
-                        Combinations::new(predicted_numbers, (ticket_size - 1).into()).collect()
+                        Combinations::new(predicted_numbers, ticket_size.into()).collect()
                     };
 
                 let next_ticket_index =
@@ -66,6 +66,11 @@ pub async fn optimize(
                         }
                     }
                 }
+
+                println!(
+                    "window size: {}, weighted_matches: {}, next ticket: {:?}, predicting ticket: {:?}",
+                    window_size,weighted_matches, lottery_tickets[next_ticket_index].numbers, predicted_tickets[0]
+                );
             }
 
             // divide ball total by number of windows for fair eval later
