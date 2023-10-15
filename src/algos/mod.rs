@@ -2,7 +2,6 @@ use crate::{LotteryTicket, LotteryTickets};
 
 use chrono::NaiveDate;
 use combinations::Combinations;
-use f128::f128;
 use std::cmp::Ordering;
 use tokio::task;
 
@@ -33,12 +32,13 @@ pub async fn optimize(
     }
     for window_size in 1..max_depth {
         tasks.push(task::spawn(async move {
-            let mut weighted_matches: f128 = f128::ZERO;
+            let mut weighted_matches = 0.0;
 
             let windows: std::slice::Windows<LotteryTicket> =
                 lottery_tickets[..lottery_tickets.len() - 1].windows(window_size);
+            let windows_len = windows.len();
 
-            for (window_index, window) in windows.clone().enumerate() {
+            for window in windows {
                 let predicted_numbers = algo(window, ticket_size);
                 if predicted_numbers.len() < ticket_size.into() {
                     continue;
@@ -55,35 +55,47 @@ pub async fn optimize(
                     find_tommorows_ticket(window.last().unwrap().date, &lottery_tickets[..])
                         .unwrap();
 
-                // tally matching numbers and multiply weight - weight of recentness and weight of balls
-                let window_weight: f128 = f128::ONE / f128::from(window_index);
+                // find index of first and last ticket in lottery_ticket and average them
+                // then apply weight to results based on recentness
+                let first_window_weight = lottery_tickets
+                    .iter()
+                    .position(|t| t == &window[0])
+                    .unwrap();
+                let last_window_weight = lottery_tickets
+                    .iter()
+                    .position(|t| t == &window[window.len() - 1])
+                    .unwrap();
+                let window_weight = 0.1 * ((first_window_weight + last_window_weight) / 2) as f64;
 
+                // tallies correct balls
                 for ticket in predicted_tickets.iter() {
                     for num in ticket.iter() {
-                        let ball_weight: f128 = f128::from(f64::from(*num as u32).powf(2.0));
+                        // apply weight based on whether ticket had 1 - 5 matching numbers
+                        let ball_weight = (*num as u32).pow(2) as f64;
                         if lottery_tickets[next_ticket_index].numbers.contains(num) {
-                            weighted_matches += f128::from(ball_weight) * window_weight;
+                            weighted_matches += ball_weight / window_weight;
                         }
                     }
                 }
 
                 println!(
-                    "window size: {}, weighted_matches: {}, next ticket: {:?}, predicting ticket: {:?}",
+                    "window weight: {}, last-date-in-window: {}, window size: {}, weighted_matches: {}, next ticket: {:?}, predicting ticket: {:?}",
+                    window_weight, window[window.len()-1].date,
                     window_size,weighted_matches, lottery_tickets[next_ticket_index].numbers, predicted_tickets[0]
                 );
             }
 
             // divide ball total by number of windows for fair eval later
-            weighted_matches = weighted_matches / f128::from(windows.len());
+            weighted_matches = weighted_matches / windows_len as f64;
 
             (window_size as u32, weighted_matches)
         }));
     }
 
-    let mut best_depth = (0, f128::ZERO);
+    let mut best_depth = (0, 0.0);
     for task in tasks {
         let (window_size, weighted_matches) = task.await.unwrap();
-        if weighted_matches > f128::from(best_depth.1) {
+        if weighted_matches > f64::from(best_depth.1) {
             best_depth = (window_size, weighted_matches)
         }
     }
