@@ -27,14 +27,18 @@ pub fn spine_sort(window: &[LotteryTicket], length: u8) -> Vec<u8> {
     let mut spine_counter: Vec<BallCount> = vec![];
 
     for ticket in window {
-        for ball in ticket.numbers.clone().into_iter() {
-            for (index, mut e_num) in spine_counter.iter_mut().enumerate() {
-                if e_num.ball == ball {
+        for ball in ticket.numbers.iter() {
+            // increments counter for each ball
+            for (mut e_num) in spine_counter.iter_mut() {
+                if e_num.ball == *ball {
                     e_num.count += 1;
                     continue;
                 }
             }
-            spine_counter.push(BallCount { ball, count: 1 })
+            spine_counter.push(BallCount {
+                ball: *ball,
+                count: 1,
+            })
         }
     }
 
@@ -44,6 +48,6 @@ pub fn spine_sort(window: &[LotteryTicket], length: u8) -> Vec<u8> {
         .map(|ball_count| ball_count.ball)
         .collect();
 
-    predicted_nums.truncate(8);
+    predicted_nums.truncate(9);
     predicted_nums
 }
