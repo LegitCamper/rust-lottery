@@ -32,7 +32,7 @@ pub async fn optimize(
     }
     for window_size in 1..max_depth {
         tasks.push(task::spawn(async move {
-            let mut weighted_matches = 0.0;
+            let mut weighted_matches = 0;
 
             let windows: std::slice::Windows<LotteryTicket> =
                 lottery_tickets[..lottery_tickets.len() - 1].windows(window_size);
@@ -60,20 +60,20 @@ pub async fn optimize(
                 let first_window_weight = lottery_tickets
                     .iter()
                     .position(|t| t == &window[0])
-                    .unwrap();
+                    .unwrap() as i32;
                 let last_window_weight = lottery_tickets
                     .iter()
                     .position(|t| t == &window[window.len() - 1])
-                    .unwrap();
-                let window_weight = 0.1 * ((first_window_weight + last_window_weight) / 2) as f64;
+                    .unwrap() as i32;
+                let window_weight = first_window_weight - last_window_weight;
+                let window_weight = window_weight.abs() as u32;
 
                 // tallies correct balls
                 for ticket in predicted_tickets.iter() {
                     for num in ticket.iter() {
-                        // apply weight based on whether ticket had 1 - 5 matching numbers
-                        let ball_weight = (*num as u32).pow(2) as f64;
+                        // apply weight based on whether ticket had 1 - x matching numbers
                         if lottery_tickets[next_ticket_index].numbers.contains(num) {
-                            weighted_matches += ball_weight / window_weight;
+                            weighted_matches += *num as u32 * window_weight                        
                         }
                     }
                 }
@@ -86,16 +86,16 @@ pub async fn optimize(
             }
 
             // divide ball total by number of windows for fair eval later
-            weighted_matches = weighted_matches / windows_len as f64;
+            weighted_matches = weighted_matches / windows_len as u32;
 
             (window_size as u32, weighted_matches)
         }));
     }
 
-    let mut best_depth = (0, 0.0);
+    let mut best_depth = (0, 0);
     for task in tasks {
         let (window_size, weighted_matches) = task.await.unwrap();
-        if weighted_matches > f64::from(best_depth.1) {
+        if weighted_matches > best_depth.1 {
             best_depth = (window_size, weighted_matches)
         }
     }

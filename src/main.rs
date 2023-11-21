@@ -16,12 +16,33 @@ type Tickets = Vec<Vec<u8>>;
 
 const MAX_HISTORY: usize = 1000;
 
+/// Simple program to predict the lottery and written in Rust!
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// run in testing mode?
+    /// Number of days to run algo on
+    #[arg(long, default_value_t = 10)]
+    history: u8,
+
+    /// Run in testing mode?
     #[arg(short, long)]
     test: bool,
+
+    /// Algo to run (spine, friends, multiply, quiet)
+    #[arg(short, long)]
+    algo: Algos,
+    // todo
+    // /// Filter to use (not impl)
+    // #[arg(short, long, default_value_t = String::from("not impl"))]
+    // filter: String,
+}
+
+#[derive(Debug, Clone, clap::ValueEnum)]
+enum Algos {
+    Spine,
+    Multiply,
+    Friends,
+    Quite,
 }
 
 #[tokio::main]
@@ -30,12 +51,23 @@ async fn main() {
 
     let tickets: LotteryTickets = Box::leak(Box::new(data_keymap().unwrap()));
 
+    let history = args.history as usize;
+
+    let algo = match args.algo {
+        Algos::Spine => spine_sort,
+        Algos::Multiply => multiply,
+        Algos::Quite => quiet,
+        Algos::Friends => friends,
+    };
+
+    // let filter = match args.filter {
+
     if args.test {
         let tickets_trimmed = tickets[tickets.len() - MAX_HISTORY..].to_vec();
         let lottery_tickets: LotteryTickets = Box::leak(Box::new(tickets_trimmed));
         let ticket_len = lottery_tickets[0].numbers.len() as u8;
 
-        let optimal_history = optimize(lottery_tickets, ticket_len, spine_sort).await;
+        let optimal_history = optimize(lottery_tickets, ticket_len, algo).await;
         println!("The optimal history of days is {optimal_history}")
     } else {
         let num_tickets = tickets.len();
@@ -46,11 +78,7 @@ async fn main() {
             .unwrap();
 
         let mut algo_guesses: Vec<u8> = Vec::new();
-        // ensure you set the current most optimal number of days correctly
-        // algo_guesses.append(&mut friends(&tickets[num_tickets - 13..], ticket_len));
-        // algo_guesses.append(&mut quiet(&tickets[num_tickets - 13..], ticket_len));
-        // algo_guesses.append(&mut multiply(&tickets[num_tickets - 13..], ticket_len));
-        algo_guesses.append(&mut spine_sort(&tickets[num_tickets - 13..], ticket_len));
+        algo_guesses.append(&mut algo(&tickets[num_tickets - history..], ticket_len));
 
         print_as_tickets(algo_guesses, ticket_len, draw_date);
     }
