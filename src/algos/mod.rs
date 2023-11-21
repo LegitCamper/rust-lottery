@@ -73,16 +73,10 @@ pub async fn optimize(
                     for num in ticket.iter() {
                         // apply weight based on whether ticket had 1 - x matching numbers
                         if lottery_tickets[next_ticket_index].numbers.contains(num) {
-                            weighted_matches += *num as u32 * window_weight                        
+                            weighted_matches += *num as u32 * window_weight
                         }
                     }
                 }
-
-                println!(
-                    "window weight: {}, last-date-in-window: {}, window size: {}, weighted_matches: {}, next ticket: {:?}, predicting ticket: {:?}",
-                    window_weight, window[window.len()-1].date,
-                    window_size,weighted_matches, lottery_tickets[next_ticket_index].numbers, predicted_tickets[0]
-                );
             }
 
             // divide ball total by number of windows for fair eval later
