@@ -17,6 +17,7 @@ type LotteryTickets = &'static [LotteryTicket];
 type Tickets = Vec<Vec<u8>>;
 
 const MAX_HISTORY: usize = 1000;
+const TICKET_COST: usize = 1;
 
 /// Simple program to predict the lottery and written in Rust!
 #[derive(Parser, Debug)]
@@ -36,7 +37,11 @@ struct Args {
 
     /// Filter to use (even_odd, bell_curve)
     #[arg(short, long)]
-    filter: Filters,
+    filters: Vec<Filters>,
+
+    /// If you know the next days numbers, you can run this to test profitablity
+    #[arg(short, long, value_parser, num_args = 1.., value_delimiter = ' ')]
+    next_day_nums: Option<Vec<u8>>,
 }
 
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -67,10 +72,14 @@ async fn main() {
         Algos::Quite => quiet,
         Algos::Friends => friends,
     };
-    let filter = match args.filter {
-        // Filters::BellCurve => bell
-        Filters::EvenOdd => even_odd,
-    };
+
+    let mut filters = vec![];
+    for filter in args.filters {
+        filters.push(match filter {
+            // Filters::BellCurve => bell
+            Filters::EvenOdd => even_odd,
+        });
+    }
 
     if args.test {
         let tickets_trimmed = tickets[tickets.len() - MAX_HISTORY..].to_vec();
@@ -97,17 +106,57 @@ async fn main() {
             .sorted()
             .collect::<Tickets>(); // next real ticket numbers
 
-        filter(&mut algo_guesses, ticket_len);
+        for filter in filters {
+            filter(&mut algo_guesses, ticket_len);
+        }
 
-        print_as_tickets(algo_guesses, draw_date);
+        match args.next_day_nums {
+            Some(nums) => print_algo_performance(algo_guesses, nums, draw_date),
+            None => print_as_tickets(algo_guesses, draw_date),
+        }
     }
 }
 
-fn print_as_tickets(algo_guesses: Vec<Vec<u8>>, draw_date: NaiveDate) {
+fn print_algo_performance(
+    algo_guesses: Vec<Vec<u8>>,
+    next_day_nums: Vec<u8>,
+    draw_date: NaiveDate,
+) {
     println!(
-        "For Draw On: {} \nPredicted Ticket(s):",
+        "For ticket drew on: {}",
         draw_date.format("%m-%d-%Y").to_string(),
     );
+    println!("Algo Performance:");
+
+    let mut most_balls = 0;
+    let mut matching_nums = 0;
+    for ticket in &algo_guesses {
+        let mut temp_most_balls = 0;
+        for t_num in ticket {
+            for n_d_num in &next_day_nums {
+                if t_num == n_d_num {
+                    matching_nums += 1;
+                    temp_most_balls += 1;
+                }
+            }
+        }
+        if temp_most_balls > most_balls {
+            most_balls = temp_most_balls
+        }
+        temp_most_balls = 0;
+    }
+    let matching_nums = matching_nums as f32 / algo_guesses.len() as f32;
+    println!(
+        "cost: {}\naverage correct ballz per ticket: {}\nmost correct balls on ticket: {}",
+        algo_guesses.len() * TICKET_COST,
+        matching_nums,
+        most_balls,
+    );
+}
+
+fn print_as_tickets(algo_guesses: Vec<Vec<u8>>, draw_date: NaiveDate) {
+    println!("For Draw On: {}", draw_date.format("%m-%d-%Y").to_string(),);
+    println!("Predicted Ticket(s):");
 
     for ticket in algo_guesses {
         let ticket = ticket.iter().sorted().collect::<Vec<&u8>>();
