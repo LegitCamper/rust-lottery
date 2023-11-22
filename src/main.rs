@@ -4,8 +4,11 @@ use crate::{
     filters::even_odd,
     read::{data_keymap, LotteryTicket},
 };
+
 use chrono::naive::{Days, NaiveDate};
 use itertools::Itertools;
+use num::rational;
+
 mod algos;
 mod filters;
 mod read;
@@ -123,7 +126,7 @@ fn print_algo_performance(
     draw_date: NaiveDate,
 ) {
     println!(
-        "For ticket drew on: {}",
+        "For drawing on: {}",
         draw_date.format("%m-%d-%Y").to_string(),
     );
     println!("Algo Performance:");
@@ -145,13 +148,14 @@ fn print_algo_performance(
         }
     }
     let matching_nums_avg = matching_nums as f32 / algo_guesses.len() as f32;
-    println!(
-        "cost: {}\naverage correct ballz per ticket: {}\nmost correct balls on ticket: {}\nratio of correct balls: {}:{}",
+    let ratio = rational::Ratio::new_raw(matching_nums, algo_guesses.len() * algo_guesses[0].len())
+        .reduced();
+    println!("cost: {}\naverage correct ballz per ticket: {}\nmost correct balls on ticket: {}\nratio of correct balls: {}:{}",
         algo_guesses.len() * TICKET_COST,
         matching_nums_avg,
         most_balls,
-        matching_nums,
-        algo_guesses.len() * algo_guesses[0].len(),
+        ratio.numer(),
+        ratio.denom(),
     );
 }
 
