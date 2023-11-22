@@ -143,14 +143,15 @@ fn print_algo_performance(
         if temp_most_balls > most_balls {
             most_balls = temp_most_balls
         }
-        temp_most_balls = 0;
     }
-    let matching_nums = matching_nums as f32 / algo_guesses.len() as f32;
+    let matching_nums_avg = matching_nums as f32 / algo_guesses.len() as f32;
     println!(
-        "cost: {}\naverage correct ballz per ticket: {}\nmost correct balls on ticket: {}",
+        "cost: {}\naverage correct ballz per ticket: {}\nmost correct balls on ticket: {}\nratio of correct balls: {}:{}",
         algo_guesses.len() * TICKET_COST,
-        matching_nums,
+        matching_nums_avg,
         most_balls,
+        matching_nums,
+        algo_guesses.len() * algo_guesses[0].len(),
     );
 }
 
