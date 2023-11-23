@@ -15,8 +15,8 @@ mod algo_speed_test {
         let lottery_tickets: LotteryTickets = Box::leak(Box::new(tickets_trimmed));
         let ticket_len = lottery_tickets[0].numbers.len() as u8;
 
-        let optimal_history = optimize(lottery_tickets, ticket_len, algo).await;
-        println!("The optimal history of days is {optimal_history}")
+        // not using any filters
+        optimize(lottery_tickets, ticket_len, algo, vec![]).await
     }
 
     #[tokio::test(flavor = "multi_thread")]

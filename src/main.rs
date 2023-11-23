@@ -7,7 +7,6 @@ use crate::{
 
 use chrono::naive::{Days, NaiveDate};
 use itertools::Itertools;
-use num::rational;
 
 mod algos;
 mod filters;
@@ -20,7 +19,6 @@ type LotteryTickets = &'static [LotteryTicket];
 type Tickets = Vec<Vec<u8>>;
 
 const MAX_HISTORY: usize = 1000;
-const TICKET_COST: usize = 1;
 
 /// Simple program to predict the lottery and written in Rust!
 #[derive(Parser, Debug)]
@@ -39,12 +37,8 @@ struct Args {
     algo: Algos,
 
     /// Filter to use (even_odd, bell_curve)
-    #[arg(short, long)]
+    #[arg(short, long, num_args = 1, value_delimiter = ' ')]
     filters: Vec<Filters>,
-
-    /// If you know the next days numbers, you can run this to test profitablity
-    #[arg(short, long, value_parser, num_args = 1.., value_delimiter = ' ')]
-    next_day_nums: Option<Vec<u8>>,
 }
 
 #[derive(Debug, Clone, clap::ValueEnum)]
@@ -76,12 +70,13 @@ async fn main() {
         Algos::Friends => friends,
     };
 
-    let mut filters = vec![];
+    let mut filters: Vec<fn(&mut Vec<Vec<u8>>)> = vec![];
     for filter in args.filters {
-        filters.push(match filter {
+        let filter = match filter {
             // Filters::BellCurve => bell
             Filters::EvenOdd => even_odd,
-        });
+        };
+        filters.push(filter);
     }
 
     if args.test {
@@ -89,8 +84,7 @@ async fn main() {
         let lottery_tickets: LotteryTickets = Box::leak(Box::new(tickets_trimmed));
         let ticket_len = lottery_tickets[0].numbers.len() as u8;
 
-        let optimal_history = optimize(lottery_tickets, ticket_len, algo).await;
-        println!("The optimal history of days is {optimal_history}")
+        optimize(lottery_tickets, ticket_len, algo, filters).await;
     } else {
         let num_tickets = tickets.len();
         let ticket_len = tickets[0].numbers.len() as u8;
@@ -110,53 +104,11 @@ async fn main() {
             .collect::<Tickets>(); // next real ticket numbers
 
         for filter in filters {
-            filter(&mut algo_guesses, ticket_len);
+            filter(&mut algo_guesses);
         }
 
-        match args.next_day_nums {
-            Some(nums) => print_algo_performance(algo_guesses, nums, draw_date),
-            None => print_as_tickets(algo_guesses, draw_date),
-        }
+        print_as_tickets(algo_guesses, draw_date)
     }
-}
-
-fn print_algo_performance(
-    algo_guesses: Vec<Vec<u8>>,
-    next_day_nums: Vec<u8>,
-    draw_date: NaiveDate,
-) {
-    println!(
-        "For drawing on: {}",
-        draw_date.format("%m-%d-%Y").to_string(),
-    );
-    println!("Algo Performance:");
-
-    let mut most_balls = 0;
-    let mut matching_nums = 0;
-    for ticket in &algo_guesses {
-        let mut temp_most_balls = 0;
-        for t_num in ticket {
-            for n_d_num in &next_day_nums {
-                if t_num == n_d_num {
-                    matching_nums += 1;
-                    temp_most_balls += 1;
-                }
-            }
-        }
-        if temp_most_balls > most_balls {
-            most_balls = temp_most_balls
-        }
-    }
-    let matching_nums_avg = matching_nums as f32 / algo_guesses.len() as f32;
-    let ratio = rational::Ratio::new_raw(matching_nums, algo_guesses.len() * algo_guesses[0].len())
-        .reduced();
-    println!("cost: {}\naverage correct ballz per ticket: {}\nmost correct balls on ticket: {}\nratio of correct balls: {}:{}",
-        algo_guesses.len() * TICKET_COST,
-        matching_nums_avg,
-        most_balls,
-        ratio.numer(),
-        ratio.denom(),
-    );
 }
 
 fn print_as_tickets(algo_guesses: Vec<Vec<u8>>, draw_date: NaiveDate) {

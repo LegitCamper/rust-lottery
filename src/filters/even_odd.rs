@@ -1,4 +1,4 @@
-pub fn even_odd(algo_guesses: &mut Vec<Vec<u8>>, _ticket_len: u8) {
+pub fn even_odd(algo_guesses: &mut Vec<Vec<u8>>) {
     for ticket in algo_guesses.clone().iter().rev() {
         let mut even = 0;
         let mut odd = 0;
