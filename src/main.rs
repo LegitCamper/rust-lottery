@@ -6,7 +6,7 @@ mod tests;
 
 use crate::{
     algos::{friends, multiply, quiet, spine_sort},
-    filters::even_odd,
+    filters::{bell, even_odd},
     optimize::optimize,
     read::{data_keymap, LotteryTicket},
 };
@@ -37,8 +37,8 @@ struct Args {
     #[arg(short, long)]
     algo: Algos,
 
-    /// Filter to use (even_odd, bell_curve)
-    #[arg(short, long, num_args = 1, value_delimiter = ' ')]
+    /// Filter to use (even_odd, bell_curve) - limited to 5 filters at a time
+    #[arg(short, long, num_args = 0..5, value_delimiter = ' ')]
     filters: Vec<Filters>,
 }
 
@@ -52,7 +52,7 @@ enum Algos {
 
 #[derive(Debug, Clone, clap::ValueEnum)]
 enum Filters {
-    // BellCurve,
+    BellCurve,
     EvenOdd,
 }
 
@@ -71,10 +71,10 @@ async fn main() {
         Algos::Friends => friends,
     };
 
-    let mut filters: Vec<fn(&mut Vec<Vec<u8>>)> = vec![];
+    let mut filters: Vec<fn(&mut Vec<Vec<u8>>, u8)> = vec![];
     for filter in args.filters {
         let filter = match filter {
-            // Filters::BellCurve => bell
+            Filters::BellCurve => bell,
             Filters::EvenOdd => even_odd,
         };
         filters.push(filter);
@@ -105,7 +105,7 @@ async fn main() {
             .collect::<Tickets>(); // next real ticket numbers
 
         for filter in filters {
-            filter(&mut algo_guesses);
+            filter(&mut algo_guesses, ticket_len);
         }
 
         print_as_tickets(algo_guesses, draw_date)

@@ -10,9 +10,9 @@ const WINDOW_SIZE: usize = 150;
 
 pub async fn optimize(
     lottery_tickets: LotteryTickets,
-    ticket_size: u8,
+    ticket_len: u8,
     algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
-    filters: Vec<fn(algo_guesses: &mut Vec<Vec<u8>>)>,
+    filters: Vec<fn(algo_guesses: &mut Vec<Vec<u8>>, ticket_len: u8)>,
 ) {
     let mut tasks = Vec::new();
 
@@ -26,7 +26,7 @@ pub async fn optimize(
     for window_size in 1..max_depth {
         let filters = filters.clone();
         tasks.push(task::spawn(async move {
-            stats(lottery_tickets, window_size, ticket_size, algo, filters)
+            stats(lottery_tickets, window_size, ticket_len, algo, filters)
         }));
     }
 
@@ -42,7 +42,7 @@ pub async fn optimize(
     let (window_size, _, mut ball_counter) = stats(
         lottery_tickets,
         best_depth.0 as usize,
-        ticket_size,
+        ticket_len,
         algo,
         filters,
     );
@@ -53,7 +53,7 @@ pub async fn optimize(
         total_matches += *matches.1;
     }
 
-    let temp_denom = window_size as u32 * ticket_size as u32;
+    let temp_denom = window_size as u32 * ticket_len as u32;
     let ratio = rational::Ratio::new_raw(total_matches, temp_denom).reduced();
 
     println!("Algo Performance:");
@@ -63,7 +63,7 @@ pub async fn optimize(
         println!("  correct balls: {}, times: {}", num.0, num.1);
     }
     println!(
-        "Ratio of correct balls: {}:{}",
+        "Ratio of correct balls: ~{}:{}",
         ratio.numer(),
         ratio.denom()
     );
@@ -73,13 +73,13 @@ pub async fn optimize(
 fn stats(
     lottery_tickets: LotteryTickets,
     window_size: usize,
-    ticket_size: u8,
+    ticket_len: u8,
     algo: fn(&[LotteryTicket], u8) -> Vec<u8>,
-    filters: Vec<fn(algo_guesses: &mut Vec<Vec<u8>>)>,
+    filters: Vec<fn(algo_guesses: &mut Vec<Vec<u8>>, ticket_legth: u8)>,
 ) -> (usize, u32, HashMap<u8, u32>) {
     let mut weighted_matches = 0;
     let mut ball_counter = HashMap::new();
-    for num in 1..ticket_size + 1 {
+    for num in 1..ticket_len + 1 {
         ball_counter.insert(num, 0);
     }
 
@@ -88,20 +88,20 @@ fn stats(
     let windows_len = windows.len();
 
     for window in windows {
-        let predicted_numbers = algo(window, ticket_size);
-        if predicted_numbers.len() < ticket_size.into() {
+        let predicted_numbers = algo(window, ticket_len);
+        if predicted_numbers.len() < ticket_len.into() {
             continue;
         }
 
         let mut predicted_tickets: Vec<Vec<u8>> =
-            if usize::from(ticket_size) == predicted_numbers.len() {
+            if usize::from(ticket_len) == predicted_numbers.len() {
                 vec![predicted_numbers]
             } else {
-                Combinations::new(predicted_numbers, ticket_size.into()).collect()
+                Combinations::new(predicted_numbers, ticket_len.into()).collect()
             };
 
         for filter in filters.iter() {
-            filter(&mut predicted_tickets);
+            filter(&mut predicted_tickets, ticket_len);
         }
 
         let next_ticket_index =
