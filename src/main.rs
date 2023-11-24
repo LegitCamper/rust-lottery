@@ -1,18 +1,19 @@
-#[allow(unused)]
+mod algos;
+mod filters;
+mod optimize;
+mod read;
+mod tests;
+
 use crate::{
-    algos::{friends, multiply, optimize, quiet, spine_sort},
+    algos::{friends, multiply, quiet, spine_sort},
     filters::even_odd,
+    optimize::optimize,
     read::{data_keymap, LotteryTicket},
 };
 
 use chrono::naive::{Days, NaiveDate};
-use itertools::Itertools;
-
-mod algos;
-mod filters;
-mod read;
-mod tests;
 use clap::Parser;
+use itertools::Itertools;
 use std::boxed::Box;
 
 type LotteryTickets = &'static [LotteryTicket];
